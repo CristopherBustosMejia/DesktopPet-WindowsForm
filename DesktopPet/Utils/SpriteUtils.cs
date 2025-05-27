@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,7 +9,7 @@ namespace DesktopPet.Utils
 {
     public static class SpriteUtils
     {
-        public const String spriteSheetPath = "C:\\Users\\cris-\\source\\repos\\DesktopPet\\DesktopPet\\Sprites\\Dog.png";
+        public static String spriteSheetPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sprites","Dog.png");
         public const int numAnimations = 9;
         public enum Animations
         {

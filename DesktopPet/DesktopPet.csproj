@@ -55,6 +55,7 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Utils\SpriteUtils.cs" />
+    <Compile Include="Utils\WinAPI.cs" />
     <EmbeddedResource Include="Forms\PetForm.resx">
       <DependentUpon>PetForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -82,7 +83,9 @@
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
-    <Content Include="Sprites\Dog.png" />
+    <Content Include="Sprites\Dog.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
