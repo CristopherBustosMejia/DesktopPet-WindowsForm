@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
+using System.Windows.Forms.VisualStyles;
 
 namespace DesktopPet.Utils
 {
     public class AnimationBox : PictureBox
     {
+        public bool FlipX { get; set; } = false;
         protected List<List<Image>> animations = new List<List<Image>>();
         private int frameIndex = 0;
         private SpriteUtils.Animations currentState = SpriteUtils.Animations.Idle;
@@ -15,10 +17,10 @@ namespace DesktopPet.Utils
         private readonly Bitmap spriteSheet;
         public AnimationBox()
         {
-            if (!File.Exists(SpriteUtils.spriteSheetPath))
+            if (!File.Exists(SpriteUtils.GetSprSheetPath("Dog")))
                 throw new FileNotFoundException("No se encontró el sprite sheet.");
 
-            spriteSheet = new Bitmap(SpriteUtils.spriteSheetPath);
+            spriteSheet = new Bitmap(SpriteUtils.GetSprSheetPath("Dog"));
             LoadAnimations();
             animationTimer.Tick += AnimationTick;
         }
@@ -40,9 +42,16 @@ namespace DesktopPet.Utils
         }
         private void AnimationTick(object sender, EventArgs e)
         {
-            var frames = this.getAnimation((SpriteUtils.Animations)currentState);
-            this.Image = frames[frameIndex];
-            frameIndex = (frameIndex + 1) % frames.Count;
+            List<Image> frames = this.getAnimation(currentState);
+            Image frame = frames[frameIndex];
+            if (FlipX)
+            {
+                frame = (Image)frame.Clone();
+                frame.RotateFlip(RotateFlipType.RotateNoneFlipX);
+            }
+            this.Image = frame;
+            frameIndex ++;
+            frameIndex = frameIndex >= frames.Count ? 0 : frameIndex; 
         }
 
         protected List<Image> SliceSpriteSheet(int animationRow)
