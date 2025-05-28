@@ -3,7 +3,7 @@ using System.IO;
 
 namespace DesktopPet.Utils
 {
-    public static class SpriteUtils
+    public static class ResourcesUtils
     {
         public enum Animations
         {
@@ -30,7 +30,7 @@ namespace DesktopPet.Utils
             Sleep = 200
         }
         public const int numAnimations = 9;
-        public static String GetSprSheetPath(String name) => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sprites", $"{name}.png");
+        public static String GetSprSheetPath(String name) => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "Sprites", $"{name}.png");
     }
 }
    

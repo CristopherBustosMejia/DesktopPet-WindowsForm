@@ -12,27 +12,27 @@ namespace DesktopPet.Utils
         public bool FlipX { get; set; } = false;
         protected List<List<Image>> animations = new List<List<Image>>();
         private int frameIndex = 0;
-        private SpriteUtils.Animations currentState = SpriteUtils.Animations.Idle;
+        private ResourcesUtils.Animations currentState = ResourcesUtils.Animations.Idle;
         private readonly Timer animationTimer = new Timer();
         private readonly Bitmap spriteSheet;
         public AnimationBox()
         {
-            if (!File.Exists(SpriteUtils.GetSprSheetPath("Dog")))
+            if (!File.Exists(ResourcesUtils.GetSprSheetPath("Dog")))
                 throw new FileNotFoundException("No se encontró el sprite sheet.");
 
-            spriteSheet = new Bitmap(SpriteUtils.GetSprSheetPath("Dog"));
+            spriteSheet = new Bitmap(ResourcesUtils.GetSprSheetPath("Dog"));
             LoadAnimations();
             animationTimer.Tick += AnimationTick;
         }
 
         protected void LoadAnimations()
         {
-            for(int i = 0; i < SpriteUtils.numAnimations; i++)
+            for(int i = 0; i < ResourcesUtils.numAnimations; i++)
             {
                 animations.Add(SliceSpriteSheet(i));
             }
         }
-        public void StartAnimation(SpriteUtils.Animations state, int interval)
+        public void StartAnimation(ResourcesUtils.Animations state, int interval)
         {
             animationTimer.Stop();
             currentState = state;
@@ -76,7 +76,7 @@ namespace DesktopPet.Utils
             }
             return frames;
         }
-        public List<Image> getAnimation(SpriteUtils.Animations animationNumber)
+        public List<Image> getAnimation(ResourcesUtils.Animations animationNumber)
         {
             return animations[(int)animationNumber];
         }

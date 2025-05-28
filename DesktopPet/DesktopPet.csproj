@@ -54,7 +54,7 @@
     <Compile Include="Components\AnimationBox.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Utils\SpriteUtils.cs" />
+    <Compile Include="Utils\ResourcesUtils.cs" />
     <Compile Include="Utils\WinAPI.cs" />
     <EmbeddedResource Include="Forms\PetForm.resx">
       <DependentUpon>PetForm.cs</DependentUpon>
@@ -81,9 +81,11 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
-    <Content Include="Sprites\Dog.png">
+    <Folder Include="Resources\Sounds\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\Sprites\Dog.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
