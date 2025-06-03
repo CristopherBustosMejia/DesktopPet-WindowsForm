@@ -1,6 +1,5 @@
 ﻿using DesktopPet.Utils;
 using System;
-using System.Diagnostics;
 using System.Drawing;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,8 +11,8 @@ namespace DesktopPet.Forms
     {
         private const int HOTKEY_ID = 9000;
         private bool isClickThroughEnabled = true;
-        private bool followActivateWindow = true;
-        private bool freeMovement = false;
+        private bool followActivateWindow = false;
+        private bool freeMovement = true;
         private bool isBusy = false;
         private IntPtr lastWindow = IntPtr.Zero;
         private CancellationTokenSource moveCancellation;
@@ -23,7 +22,6 @@ namespace DesktopPet.Forms
         private AnimationBox pet;
         private ContextMenuStrip contextMenu;
         private ToolStripMenuItem toggleWindowFocusItem;
-        private ToolStripMenuItem exitItem;
         private ToolStripMenuItem toggleFreeMovementItem;
 
         public PetForm()
@@ -31,6 +29,13 @@ namespace DesktopPet.Forms
             InitializeComponent();
             InitializeForm();
             InitializePet();
+            InitializeContextMenu();
+        }
+        public PetForm(String path)
+        {
+            InitializeComponent();
+            InitializeForm();
+            InitializePet(path);
             InitializeContextMenu();
         }
         private void InitializeForm()
@@ -62,19 +67,31 @@ namespace DesktopPet.Forms
             };
             this.Controls.Add(pet);
         }
+        private void InitializePet(String path)
+        {
+            pet = new AnimationBox(path)
+            {
+                BackColor = Color.Transparent,
+                SizeMode = PictureBoxSizeMode.AutoSize,
+                Location = new Point(0, 0)
+            };
+            this.Controls.Add(pet);
+        }
         private void InitializeContextMenu()
         {
             contextMenu = new ContextMenuStrip();
             toggleWindowFocusItem = new ToolStripMenuItem("Follow focused window", null, ToggleWindowFocusItem);
             toggleFreeMovementItem = new ToolStripMenuItem("Free Movement", null, ToggleFreeMovementItem);
-            exitItem = new ToolStripMenuItem("Exit", null, (s, e) => Environment.Exit(0));
 
             contextMenu.Items.AddRange(new ToolStripItem[]
             {
                 toggleWindowFocusItem,
                 toggleFreeMovementItem,
                 new ToolStripSeparator(),
-                exitItem
+                new ToolStripMenuItem("Nueva Mascota", null, CreatePet),
+                new ToolStripSeparator(),
+                new ToolStripMenuItem("Cerrar", null, (s,e)=> this.Close()),
+                new ToolStripMenuItem("Exit", null, (s, e) => Environment.Exit(0))
             });
             this.ContextMenuStrip = contextMenu;
             toggleWindowFocusItem.Checked = followActivateWindow;
@@ -83,10 +100,8 @@ namespace DesktopPet.Forms
         private void PetForm_Load(object sender, EventArgs e)
         {
             pet.StartAnimation(ResourcesUtils.Animations.Idle, 150);
-
             this.Size = pet.Image != null ? pet.Image.Size : new Size(64, 48);
-
-            EnableClickThrough();
+            DisableClickThrough();
             this.Size = pet.Size;
             Rectangle workingArea = Screen.PrimaryScreen.WorkingArea;
             origin = new Point(workingArea.Width - pet.Width, workingArea.Height - pet.Height);
@@ -94,7 +109,12 @@ namespace DesktopPet.Forms
             behaviorTimer.Interval = 1000;
             behaviorTimer.Tick += BehaviorTick;
             behaviorTimer.Start();
-            bool success = WinAPI.RegisterHotKey(this.Handle, HOTKEY_ID, WinAPI.MOD_CTRL, (int)Keys.F12);
+            if(!Program.IsHotKeyRegistered())
+            {
+                bool success = WinAPI.RegisterHotKey(this.Handle, HOTKEY_ID, WinAPI.MOD_CTRL, (int)Keys.F12);
+                if(success)
+                    Program.RegisterHotKey();
+            }
         }
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
@@ -164,16 +184,17 @@ namespace DesktopPet.Forms
                 isBusy = false;
             }
         }
-        private async void ToggleWindowFocusItem(object sender, EventArgs e)
+        private void ToggleWindowFocusItem(object sender, EventArgs e)
         {
             freeMovement = false;
             followActivateWindow = !followActivateWindow;
             toggleWindowFocusItem.Checked = followActivateWindow;
             toggleFreeMovementItem.Checked = freeMovement;
         }
-        private async void ToggleFreeMovementItem(object sender, EventArgs e)
+        private void ToggleFreeMovementItem(object sender, EventArgs e)
         {
             followActivateWindow = false;
+            freeMovement = !freeMovement;
             toggleWindowFocusItem.Checked = followActivateWindow;
             toggleFreeMovementItem.Checked = freeMovement;
         }
@@ -250,18 +271,21 @@ namespace DesktopPet.Forms
             TimeSpan currentTime = now.TimeOfDay;
             TimeSpan startTime = new TimeSpan(6, 0, 0);
             TimeSpan endTime = new TimeSpan(24, 0, 0);
-            return currentTime >= startTime && currentTime <= endTime;
+            //return currentTime >= startTime && currentTime <= endTime;
+            return true;
         }
 
         protected override void WndProc(ref Message m)
         {
             if (m.Msg == WinAPI.WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID)
             {
-                if (isClickThroughEnabled)
-                    DisableClickThrough();
-                else
-                    EnableClickThrough();
-                int wl = WinAPI.GetWindowLong(this.Handle, WinAPI.GWL_EXSTYLE);
+                foreach (var pet in Program.GetPets())
+                {
+                    if (pet.isClickThroughEnabled)
+                        pet.DisableClickThrough();
+                    else
+                        pet.EnableClickThrough();
+                }
             }
 
             if (m.Msg == WinAPI.WM_NCHITTEST && !isClickThroughEnabled)
@@ -273,7 +297,6 @@ namespace DesktopPet.Forms
         }
         private async Task PerformRandomBehavior()
         {
-            Debug.WriteLine("Performing Random Behavior");
             Random rand = new Random();
             int behavior = rand.Next(0, 5);
             switch (behavior)
@@ -283,26 +306,26 @@ namespace DesktopPet.Forms
                     int randomX = rand.Next(workingArea.Left, workingArea.Right - this.Width);
                     Point randomTarget = new Point(randomX, workingArea.Bottom - this.Height);
                     await WalkTo(randomTarget, CancellationToken.None);
-                    Debug.WriteLine("Finish Walk");
                     break;
                 case 1:
                     pet.StartAnimation(ResourcesUtils.Animations.Sit, (int)ResourcesUtils.Intervals.Sit);
-                    Debug.WriteLine("Finish Sit");
                     break;
                 case 2:
                     pet.StartAnimation(ResourcesUtils.Animations.Lay, (int)ResourcesUtils.Intervals.Lay);
-                    Debug.WriteLine("Finish Lay");
                     break;
                 case 3:
                     pet.StartAnimation(ResourcesUtils.Animations.Idle, (int)ResourcesUtils.Intervals.Idle);
-                    Debug.WriteLine("Finish Idle");
                     break;
                 case 4:
                     pet.StartAnimation(ResourcesUtils.Animations.Trick, (int)ResourcesUtils.Intervals.Trick);
-                    Debug.WriteLine("Finish Trick");
                     break;
             }
             
+        }
+        private void CreatePet(object sender, EventArgs e)
+        {
+            String path = ResourcesUtils.GetSprSheetPath();
+            Program.AddPet(path);
         }
     }
 }

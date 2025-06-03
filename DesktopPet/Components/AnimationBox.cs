@@ -17,10 +17,18 @@ namespace DesktopPet.Utils
         private readonly Bitmap spriteSheet;
         public AnimationBox()
         {
-            if (!File.Exists(ResourcesUtils.GetSprSheetPath("Dog")))
+            if (!File.Exists(ResourcesUtils.GetSprSheetPath("Dog-Brown&Grey")))
                 throw new FileNotFoundException("No se encontró el sprite sheet.");
 
-            spriteSheet = new Bitmap(ResourcesUtils.GetSprSheetPath("Dog"));
+            spriteSheet = new Bitmap(ResourcesUtils.GetSprSheetPath("Dog-Brown&Grey"));
+            LoadAnimations();
+            animationTimer.Tick += AnimationTick;
+        }
+        public AnimationBox(String spriteSheetPath)
+        {
+            if (!File.Exists(spriteSheetPath))
+                throw new FileNotFoundException("No se encontró el sprite sheet.", spriteSheetPath);
+            spriteSheet = new Bitmap(spriteSheetPath);
             LoadAnimations();
             animationTimer.Tick += AnimationTick;
         }

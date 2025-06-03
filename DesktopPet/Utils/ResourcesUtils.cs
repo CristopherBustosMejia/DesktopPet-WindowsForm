@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace DesktopPet.Utils
 {
@@ -31,6 +33,27 @@ namespace DesktopPet.Utils
         }
         public const int numAnimations = 9;
         public static String GetSprSheetPath(String name) => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "Sprites", $"{name}.png");
+        public static String GetSprSheetPath()
+        {
+            using (OpenFileDialog ofd = new OpenFileDialog())
+            {
+                ofd.Title = "Selecciona el sprite sheet del nuevo pet";
+                ofd.Filter = "Archivos de imagen|*.png;*.jpg;*.jpeg;*.bmp|Todos los archivos|*.*";
+                ofd.InitialDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "Sprites");
+                if (ofd.ShowDialog() == DialogResult.OK)
+                {
+                    string spriteSheetPath = ofd.FileName;
+                    if (!File.Exists(spriteSheetPath))
+                    {
+                        MessageBox.Show("El archivo seleccionado no existe.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return ResourcesUtils.GetSprSheetPath("Default");
+                    }
+                    return spriteSheetPath;
+                }
+                MessageBox.Show("No se selecciono ningun archivo.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return ResourcesUtils.GetSprSheetPath("Default");
+            }
+        }
     }
 }
    
